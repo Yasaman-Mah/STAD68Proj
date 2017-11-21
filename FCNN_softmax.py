@@ -99,6 +99,8 @@ if __name__ == "__main__":
         
         if (i%100 == 0):
             print("iteration", i, "loss", loss)
+
+    saver.save(sess, "FF_SOFTMAX.ckpt"
     
         
         
