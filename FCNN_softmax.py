@@ -60,14 +60,14 @@ class FCNN_SOFTMAX():
         
         cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=scores))
         
-        # Not sure yet if class probabilities are needed
-        return cross_entropy_loss
+        # return class probabilities for measuring performance
+        return cross_entropy_loss, probabilities
 
 
 
     @scoped_property
     def optimize(self):
-        loss = self.loss
+        loss, _ = self.loss
         optimize = tf.train.AdagradOptimizer(0.01).minimize(loss)
         
         return optimize
@@ -95,12 +95,12 @@ if __name__ == "__main__":
         true_labels[:,1] = 1 - batch[:,30]
         
         sess.run(ffnn.optimize, feed_dict={transactions:batch[:,0:30], labels:true_labels})
-        loss = sess.run(ffnn.loss, feed_dict={transactions:batch[:,0:30], labels:true_labels})
+        loss, _ = sess.run(ffnn.loss, feed_dict={transactions:batch[:,0:30], labels:true_labels})
         
         if (i%100 == 0):
             print("iteration", i, "loss", loss)
 
-    saver.save(sess, "FF_SOFTMAX.ckpt"
+    saver.save(sess, "FF_SOFTMAX.ckpt")
     
         
         
