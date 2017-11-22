@@ -44,8 +44,8 @@ class FCNN_SOFTMAX():
     def score(self):
         w1 = weights([self.input_size, self.layer_size])
         b1 = bias([self.layer_size])
-        w2 = weights([self.layer_size, 2])
-        b2 = bias([2])
+        w2 = weights([self.layer_size, 1])
+        b2 = bias([1])
         
         h1 = tf.nn.relu(tf.matmul(self.x, w1) + b1)
         h2 = tf.matmul(h1, w2) + b2
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     
 
     transactions = tf.placeholder(tf.float32, [None, 30])
-    labels = tf.placeholder(tf.float32, [None, 2])
+    labels = tf.placeholder(tf.float32, [None, 1])
     ffnn = FCNN_SOFTMAX(transactions, labels)
 
     sess = tf.Session()
@@ -91,9 +91,8 @@ if __name__ == "__main__":
     
     for i in range(50000):
         batch = get_sample(train_legitimate, train_fraud, 100, 30)
-        true_labels = np.zeros([100, 2])
+        true_labels = np.zeros([100, 1])
         true_labels[:,0] = batch[:,30]
-        true_labels[:,1] = 1 - batch[:,30]
         
         sess.run(ffnn.optimize, feed_dict={transactions:batch[:,0:30], labels:true_labels})
         loss = sess.run(ffnn.loss, feed_dict={transactions:batch[:,0:30], labels:true_labels})
