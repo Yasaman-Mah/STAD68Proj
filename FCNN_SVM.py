@@ -27,7 +27,7 @@ def bias(shape):
 	return tf.Variable(initial)
 
 
-class FCNN_SOFTMAX():
+class FCNN_SVM():
 
     def __init__(self, transactions, labels,lmbd=0.1, num_neurons=200):
         self.x = transactions
@@ -57,18 +57,20 @@ class FCNN_SOFTMAX():
     def loss(self):
         scores, w2 = self.score
         
+        probabilities = tf.sigmoid(scores)
+        
         avg_hinge_loss = tf.reduce_mean(tf.losses.hinge_loss(labels=self.labels, logits=scores))
         
         svm_loss = self.lmbd * tf.sqrt(tf.nn.l2_loss(w2)) + avg_hinge_loss
         
 
-        return svm_loss
+        return svm_loss, probabilities
 
 
 
     @scoped_property
     def optimize(self):
-        loss = self.loss
+        loss, _ = self.loss
         optimize = tf.train.AdagradOptimizer(0.01).minimize(loss)
         
         return optimize
@@ -83,7 +85,7 @@ if __name__ == "__main__":
 
     transactions = tf.placeholder(tf.float32, [None, 30])
     labels = tf.placeholder(tf.float32, [None, 1])
-    ffnn = FCNN_SOFTMAX(transactions, labels)
+    ffnn = FCNN_SVM(transactions, labels)
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
@@ -95,7 +97,7 @@ if __name__ == "__main__":
         true_labels[:,0] = batch[:,30]
         
         sess.run(ffnn.optimize, feed_dict={transactions:batch[:,0:30], labels:true_labels})
-        loss = sess.run(ffnn.loss, feed_dict={transactions:batch[:,0:30], labels:true_labels})
+        loss, _ = sess.run(ffnn.loss, feed_dict={transactions:batch[:,0:30], labels:true_labels})
         
         if (i%100 == 0):
             print("iteration", i, "loss", loss)
