@@ -24,15 +24,17 @@ probabilities = rfc.predict_proba(test_data[:,0:30])
 print(sum(probabilities[:,0]), test_data[0,30], rfc.classes_, "num classes", rfc.n_classes_)
 
 precision_rf, recall_rf, thresholds_rf = precision_recall_curve(test_data[:,30], probabilities[:,1])
+avg_precision = average_precision_score(test_data[:,30], probabilities[:,1])
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.step(recall_rf, precision_rf)
 ax.set_xlabel('recall')
 ax.set_ylabel('precision')
-ax.set_title('precision recall curve for random forest (Gini loss)')
+ax.set_title('precision recall curve for random forest')
 plt.show()
 
+print("average precision score", avg_precision)
 
 
 

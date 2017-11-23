@@ -30,6 +30,7 @@ with sess1.as_default():
         _ , probabilities = sess1.run(softmax_NN.loss, feed_dict={transactions:test_data[:,0:30], labels:test_labels})
  
         precision_softmax, recall_softmax, thresholds_softmax = precision_recall_curve(test_labels[:,0], probabilities[:,0])
+        avg_precision_softmax = average_precision_score(test_labels[:,0], probabilities[:,0])
 
 fig1 = plt.figure()
 ax1 = fig1.add_subplot(111)
@@ -38,6 +39,8 @@ ax1.set_xlabel('recall')
 ax1.set_ylabel('precision')
 ax1.set_title('precision recall curve for feed forward neural net with cross entropy loss')
 plt.show()
+
+print("average precision score for softmax classifier", avg_precision_softmax)
 
 
 ##### neural net with svm layer
@@ -58,6 +61,7 @@ with sess2.as_default():
         _ , probabilities = sess2.run(SVM_NN.loss, feed_dict={transactions:test_data[:,0:30], labels:test_labels[:,0:1]})
  
         precision_svm, recall_svm, thresholds_svm = precision_recall_curve(test_labels[:,0], probabilities)
+        avg_precision_svm = average_precision_score(test_labels[:,0], probabilities)
 
 fig2 = plt.figure(2)
 ax2 = fig2.add_subplot(111)
@@ -66,3 +70,4 @@ ax2.set_xlabel('recall')
 ax2.set_ylabel('precision')
 ax2.set_title('precision recall curve for feed forward neural net with SVM loss')
 plt.show()
+print("average precision score for svm classifier", avg_precision_svm)
