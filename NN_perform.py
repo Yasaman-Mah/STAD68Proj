@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from sklearn.metrics import precision_recall_curve, average_precision_score
+from sklearn.metrics import precision_recall_curve, auc
 from FCNN_softmax import FCNN_SOFTMAX
 from FCNN_SVM import FCNN_SVM
 import matplotlib.pyplot as plt
@@ -30,17 +30,26 @@ with sess1.as_default():
         _ , probabilities = sess1.run(softmax_NN.loss, feed_dict={transactions:test_data[:,0:30], labels:test_labels})
  
         precision_softmax, recall_softmax, thresholds_softmax = precision_recall_curve(test_labels[:,0], probabilities[:,0])
-        avg_precision_softmax = average_precision_score(test_labels[:,0], probabilities[:,0])
+        aucpr_sft = auc(recall_softmax, precision_softmax)
+        print("area under precision recall curve for neural network with cross entropy loss", aucpr_sft)
+        
+        #bootstrapping
+        k = 100
+        auprcs = np.zeros(k)
+        num_samples = test_data.shape[0]
 
-fig1 = plt.figure()
-ax1 = fig1.add_subplot(111)
-ax1.step(recall_softmax, precision_softmax)
-ax1.set_xlabel('recall')
-ax1.set_ylabel('precision')
-ax1.set_title('precision recall curve for feed forward neural net with cross entropy loss')
-plt.show()
+        for i in range(k):
+            resampled_test = test_data[np.random.choice(num_samples, num_samples, replace=True)]
+            # don't care about labels here 
+            _ , prob = sess1.run(softmax_NN.loss, feed_dict={transactions:resampled_test[:,0:30], labels:test_labels})
+            # but care about labels here
+            prec, recall, _ = precision_recall_curve(resampled_test[:,30], prob[:,0])
+            auprcs[i] = auc(recall, prec)
 
-print("average precision score for softmax classifier", avg_precision_softmax)
+        # get 95 and 5 percentiles
+        percentiles = np.percentile(auprcs, (2.5, 97.5))
+        print("95% confidence interval for aucpr of NN with softmax",percentiles)
+
 
 
 ##### neural net with svm layer
@@ -61,13 +70,39 @@ with sess2.as_default():
         _ , probabilities = sess2.run(SVM_NN.loss, feed_dict={transactions:test_data[:,0:30], labels:test_labels[:,0:1]})
  
         precision_svm, recall_svm, thresholds_svm = precision_recall_curve(test_labels[:,0], probabilities)
-        avg_precision_svm = average_precision_score(test_labels[:,0], probabilities)
+        aucpr_svm = auc(recall_svm, precision_svm)
+        print("area under precision recall curve for neural network with svm layer", aucpr_svm)
+        
+        #bootstrapping
+        k = 100
+        auprcs = np.zeros(k)
+        num_samples = test_data.shape[0]
 
-fig2 = plt.figure(2)
+        for i in range(k):
+            resampled_test = test_data[np.random.choice(num_samples, num_samples, replace=True)]
+            # don't care about labels here 
+            _ , prob = sess2.run(SVM_NN.loss, feed_dict={transactions:resampled_test[:,0:30], labels:test_labels[:, 0:1]})
+            # but care about labels here
+            prec, recall, _ = precision_recall_curve(resampled_test[:,30], prob)
+            auprcs[i] = auc(recall, prec)
+
+        # get 95 and 5 percentiles
+        percentiles = np.percentile(auprcs, (2.5, 97.5))
+        print("95% confidence interval for aucpr of NN with SVM",percentiles)
+        
+##### plot all precision recall curves in one window
+# restore precision recall stores for random forest
+rf_prec_recall = np.load("rf_prec_recall.npz")
+
+ 
+ 
+fig2 = plt.figure()
 ax2 = fig2.add_subplot(111)
+ax2.step(recall_softmax, precision_softmax)
 ax2.step(recall_svm, precision_svm)
+ax2.step(rf_prec_recall['recall'], rf_prec_recall['prec'])
 ax2.set_xlabel('recall')
 ax2.set_ylabel('precision')
-ax2.set_title('precision recall curve for feed forward neural net with SVM loss')
+ax2.set_title('precision recall curves')
+ax2.legend(["NN with softmax", "NN with SVM", "random forest"])
 plt.show()
-print("average precision score for svm classifier", avg_precision_svm)
